@@ -421,12 +421,6 @@ python run_workflow.py --steps qsar admet
 
 本项目采用 MIT 许可证 - 详见 [LICENSE](LICENSE) 文件
 
-## 📧 联系方式
-
-- 项目主页: https://github.com/yourusername/molecular-screening-workflow
-- 问题反馈: https://github.com/yourusername/molecular-screening-workflow/issues
-- 邮箱: your.email@example.com
-
 ## 🙏 致谢
 
 感谢以下开源项目：
