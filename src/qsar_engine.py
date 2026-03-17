@@ -1,7 +1,10 @@
 from operator import index
 import os
+<<<<<<< HEAD
+=======
 import json
 from datetime import datetime
+>>>>>>> 518afaa (2rd commit: modify RNN QSAR model)
 import tqdm
 from xml.parsers.expat import model
 import pandas as pd
@@ -82,8 +85,13 @@ def visualize_qsar_results(output_path, y):
     print("Generated molecule predictions compared to inhibitor actual activities plot displayed.")
 
 
+<<<<<<< HEAD
+def train_qsar_model(training_data,model_path):
+    print(">>> 步骤 1 & 2: 正在训练 QSAR 模型并进行动态筛选...")
+=======
 def train_qsar_model(training_data, model_path):
     print(">>> 步骤 1 & 2: 正在训练优化的 QSAR 模型并进行动态筛选...")
+>>>>>>> 518afaa (2rd commit: modify RNN QSAR model)
 
     X = training_data.drop('IC50', axis=1)
     y = training_data['IC50']
@@ -91,6 +99,13 @@ def train_qsar_model(training_data, model_path):
     print("Shape of X:", X.shape)
     print("Shape of y:", y.shape)
 
+<<<<<<< HEAD
+    # Split the features (X) and target (y) into training and validation sets
+    X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
+    df_train = pd.concat([X_train, y_train], axis=1)
+    df_train.to_csv('./results/QSAR/qsar_training_data.csv', index=False)
+    df_val = pd.concat([X_val, y_val], axis=1)
+=======
     # 对数变换（IC50通常是偏态分布）
     y_log = np.log1p(y)
 
@@ -101,6 +116,7 @@ def train_qsar_model(training_data, model_path):
     df_train.to_csv('./results/QSAR/qsar_training_data.csv', index=False)
     
     df_val = pd.concat([X_val.reset_index(drop=True), pd.Series(np.expm1(y_val), name='IC50')], axis=1)
+>>>>>>> 518afaa (2rd commit: modify RNN QSAR model)
     df_val.to_csv('./results/QSAR/qsar_validation_data.csv', index=False)
 
     print(f"X_train shape: {X_train.shape}")
@@ -108,6 +124,48 @@ def train_qsar_model(training_data, model_path):
     print(f"y_train shape: {y_train.shape}")
     print(f"y_val shape: {y_val.shape}")
     
+<<<<<<< HEAD
+    
+    # 添加特征选择
+    from sklearn.feature_selection import SelectKBest, f_regression
+    selector = SelectKBest(f_regression, k=min(100, X_train.shape[1]))
+    X_train_selected = selector.fit_transform(X_train, y_train)
+    X_val_selected = selector.transform(X_val)
+    
+    print(f"Original features: {X_train.shape[1]}, Selected features: {X_train_selected.shape[1]}")
+    
+    # 训练 (利用 10 核 CPU)
+    model = RandomForestRegressor(
+        n_estimators=200, 
+        max_depth=30, 
+        min_samples_split=2, 
+        min_samples_leaf=1, 
+        max_features='sqrt', 
+        n_jobs=10, 
+        random_state=42
+    )
+    print("Training Random Forest Regressor model...")
+    model.fit(X_train_selected, y_train)
+    print("Model training complete.")
+
+    # Make predictions on the validation set
+    y_pred = model.predict(X_val_selected)
+
+    # Calculate and print the R-squared score
+    r2 = r2_score(y_val, y_pred)
+    print(f"R-squared score on the validation set: {r2:.4f}")
+
+    # Calculate and print the Root Mean Squared Error (RMSE)
+    rmse = np.sqrt(mean_squared_error(y_val, y_pred))
+    print(f"Root Mean Squared Error (RMSE) on the validation set: {rmse:.4f}")
+    
+    # 保存模型和特征选择器
+    import pickle
+    with open(model_path, 'wb') as f:
+        pickle.dump((model, selector), f)
+    
+    return model, selector
+=======
     # 使用优化的Pipeline：标准化 + 特征选择 + 集成模型
     from sklearn.preprocessing import StandardScaler
     from sklearn.ensemble import GradientBoostingRegressor, VotingRegressor
@@ -176,6 +234,7 @@ def train_qsar_model(training_data, model_path):
         pickle.dump(pipeline, f)
     
     return pipeline, None
+>>>>>>> 518afaa (2rd commit: modify RNN QSAR model)
 
 def qsar_predict_and_filter(train_data_path, predict_data_path, model_path='./models/rf_qsar_model.pkl', demo_mode=False):
     print(">>> 启动 QSAR 筛选流水线...")
@@ -256,8 +315,13 @@ def qsar_predict_and_filter(train_data_path, predict_data_path, model_path='./mo
     training_data['IC50'] = df_inhibitors_cleaned.apply(convert_to_nm, axis=1)
     training_data.to_csv('./results/train_cleaned.csv',index=False)
 
+<<<<<<< HEAD
+    # 训练模型并获取特征选择器
+    model, selector = train_qsar_model(training_data,model_path)
+=======
     # 训练模型并获取完整pipeline
     pipeline, _ = train_qsar_model(training_data, model_path)
+>>>>>>> 518afaa (2rd commit: modify RNN QSAR model)
 
     # 预测 IC50
 
@@ -274,6 +338,15 @@ def qsar_predict_and_filter(train_data_path, predict_data_path, model_path='./mo
     # Also, ensure df_generated_molecules_cleaned is aligned with the dropped rows
     df_generated_molecules_cleaned = df_generated_molecules_cleaned.loc[generated_molecules_descriptors_aligned.index]
 
+<<<<<<< HEAD
+    # 使用相同的特征选择器转换特征
+    generated_molecules_descriptors_selected = selector.transform(generated_molecules_descriptors_aligned)
+    predicted_activities = model.predict(generated_molecules_descriptors_selected)
+    df_generated_molecules_cleaned['pred_IC50'] = predicted_activities
+    
+    # 加载akt1-activities数据集，分析IC50分布
+    akt1_data = pd.read_csv('./csv_input/ChEMBL_Cleaned_akt1-activities_zip.csv')
+=======
     # 使用完整pipeline预测（在对数空间预测，然后转换回原始空间）
     predicted_activities_log = pipeline.predict(generated_molecules_descriptors_aligned)
     predicted_activities = np.expm1(predicted_activities_log)
@@ -281,6 +354,7 @@ def qsar_predict_and_filter(train_data_path, predict_data_path, model_path='./mo
     
     # 加载akt1-activities数据集，分析IC50分布
     akt1_data = pd.read_csv('./data/ChEMBL_Cleaned_akt1-activities_zip.csv')
+>>>>>>> 518afaa (2rd commit: modify RNN QSAR model)
     akt1_ic50_min = akt1_data['IC50_nM'].min()
     akt1_ic50_max = akt1_data['IC50_nM'].max()
     akt1_ic50_median = akt1_data['IC50_nM'].median()

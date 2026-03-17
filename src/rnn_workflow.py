@@ -78,6 +78,24 @@ def run_rnn_generation(config=None, demo_mode=False):
     try:
         if os.path.exists(model_path):
             print(f"加载预训练模型: {model_path}")
+<<<<<<< HEAD
+            model = tf.keras.models.load_model(model_path)
+            print("模型加载成功")
+            
+            alphabet = _load_alphabet()
+            generated_smiles = _generate_molecules(model, alphabet, num_molecules, temperature)
+            
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+            pd.DataFrame({'SMILES': generated_smiles}).to_csv(output_path, index=False)
+            print(f"生成了 {len(generated_smiles)} 个分子")
+            print(f"结果已保存至: {output_path}")
+            
+            return generated_smiles
+        else:
+            print(f"警告: 模型文件不存在: {model_path}")
+            print("请先训练RNN模型或使用演示模式")
+            return []
+=======
             try:
                 model = tf.keras.models.load_model(model_path)
                 print("模型加载成功")
@@ -99,6 +117,7 @@ def run_rnn_generation(config=None, demo_mode=False):
         
         print("开始训练新的RNN模型...")
         return _train_and_generate(train_data_path, model_path, output_path, num_molecules, temperature)
+>>>>>>> 518afaa (2rd commit: modify RNN QSAR model)
             
     except Exception as e:
         print(f"RNN生成失败: {str(e)}")
@@ -119,6 +138,8 @@ def _load_alphabet():
     return default_alphabet
 
 
+<<<<<<< HEAD
+=======
 def _train_and_generate(train_data_path, model_path, output_path, num_molecules, temperature):
     """训练RNN模型并生成分子 - 使用优化架构"""
     import json
@@ -263,6 +284,7 @@ def _train_and_generate(train_data_path, model_path, output_path, num_molecules,
     return generated_smiles
 
 
+>>>>>>> 518afaa (2rd commit: modify RNN QSAR model)
 def _generate_molecules(model, alphabet, num_molecules, temperature):
     """使用模型生成分子"""
     generated_smiles = []

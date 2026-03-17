@@ -1,5 +1,3 @@
-MOLECULE_ID,SMILES,IUPAC,
-Mol.24,CC=C=[C]Cl,"1-chlorobuta-1,2-diene",
-Mol.25,N=CCCN=O,3-nitrosopropan-1-imine,
-Mol.26,CN[NH],methylhydrazine,
-Mol.36,[O-][CH][CH]Br,2-bromoethanolate,
+version https://git-lfs.github.com/spec/v1
+oid sha256:d70017191c2d1e6020b7bf85f919c2b48e2a6a0a3505f14ccee147164335d659
+size 188

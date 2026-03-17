@@ -151,6 +151,8 @@ history = model.fit(
     callbacks=[reduce_lr, early_stopping]
 )
 
+<<<<<<< HEAD
+=======
 import json
 from datetime import datetime
 
@@ -182,6 +184,7 @@ with open('./models/rnn_performance.json', 'w', encoding='utf-8') as f:
     json.dump(rnn_performance, f, indent=2, ensure_ascii=False)
 print('模型性能记录已保存: ./models/rnn_performance.json')
 
+>>>>>>> 518afaa (2rd commit: modify RNN QSAR model)
 import random
 
 

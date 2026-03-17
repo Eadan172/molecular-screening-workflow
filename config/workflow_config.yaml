@@ -9,11 +9,19 @@ workflow:
 
 # 数据路径配置
 data:
+<<<<<<< HEAD
+  # RNN训练数据
+  rnn_train_data: "data/Anticancer_compounds@1994_from_paper.csv"
+  
+  # QSAR训练数据
+  qsar_train_data: "data/ChEMBL_Cleaned_akt1-activities_zip.csv"
+=======
   # RNN训练数据（合并后）
   rnn_train_data: "data/merged_rnn_data.csv"
   
   # QSAR训练数据（合并后）
   qsar_train_data: "data/merged_qsar_data.csv"
+>>>>>>> 518afaa (2rd commit: modify RNN QSAR model)
   
   # 生成的分子数据
   generated_molecules: "results/generated_smiles_from_1994mols.csv"
@@ -38,10 +46,17 @@ rnn:
   top_k: 50
   
   # 训练轮数
+<<<<<<< HEAD
+  epochs: 100
+  
+  # 批大小
+  batch_size: 32
+=======
   epochs: 200
   
   # 批大小
   batch_size: 128
+>>>>>>> 518afaa (2rd commit: modify RNN QSAR model)
 
 # QSAR参数
 qsar:
