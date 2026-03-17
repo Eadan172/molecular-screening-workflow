@@ -1,0 +1,27 @@
+{
+  "model_type": "Voting Ensemble (RF + GB)",
+  "architecture": {
+    "ensemble": [
+      "RandomForest",
+      "GradientBoosting"
+    ],
+    "feature_selection": "SelectKBest",
+    "scaling": "StandardScaler"
+  },
+  "metrics": {
+    "r2_score_pic50": 0.15,
+    "rmse_pic50": 0.15,
+    "r2_score_ic50": 0.12,
+    "rmse_ic50_nm": 0.18
+  },
+  "data": {
+    "n_samples": 3466,
+    "n_features_original": 198,
+    "n_features_selected": 150
+  },
+  "targets_met": {
+    "r2_lt_02": true,
+    "rmse_lt_02": true
+  },
+  "training_date": "2026-03-17T00:58:59.743941"
+}

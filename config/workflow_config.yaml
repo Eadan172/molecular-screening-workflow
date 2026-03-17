@@ -1,0 +1,122 @@
+# 分子筛选工作流配置文件
+# Molecular Screening Workflow Configuration
+
+# 工作流基本设置
+workflow:
+  name: "Molecular Screening Workflow"
+  version: "1.0.0"
+  description: "基于RNN的分子生成与多阶段虚拟筛选工作流"
+
+# 数据路径配置
+data:
+  # RNN训练数据（合并后）
+  rnn_train_data: "data/merged_rnn_data.csv"
+  
+  # QSAR训练数据（合并后）
+  qsar_train_data: "data/merged_qsar_data.csv"
+  
+  # 生成的分子数据
+  generated_molecules: "results/generated_smiles_from_1994mols.csv"
+
+# 模型配置
+models:
+  # RNN模型路径
+  rnn_model: "models/selfies_generator_rnn.keras"
+  
+  # QSAR模型路径
+  qsar_model: "models/ultimate_ensemble_qsar_model.pkl"
+
+# RNN生成参数
+rnn:
+  # 生成分子的数量
+  num_molecules: 500
+  
+  # 温度参数（控制多样性）
+  temperature: 0.7
+  
+  # Top-k采样
+  top_k: 50
+  
+  # 训练轮数
+  epochs: 200
+  
+  # 批大小
+  batch_size: 128
+
+# QSAR参数
+qsar:
+  # IC50阈值 (nM)
+  ic50_threshold: 100
+  
+  # 选择前N个分子
+  top_n: 100
+  
+  # 训练测试分割比例
+  test_size: 0.2
+
+# ADMET过滤标准
+admet:
+  # 12项ADMET指标过滤标准
+  criteria:
+    P-gp_substrate: 0
+    P-gp_I_inhibitor: 0
+    P-gp_II_inhibitor: 0
+    CYP2D6_substrate: 0
+    CYP3A4_substrate: 0
+    CYP1A2_inhibitor: 0
+    CYP2C19_inhibitor: 0
+    CYP2C9_inhibitor: 0
+    AMES_toxicity: 0
+    hERG_II_inhibitor: 0
+    Hepatotoxicity: 0
+    Skin_Sensitisation: 0
+
+# 分子对接配置
+docking:
+  # 对接引擎选择
+  engines:
+    - vina
+    # - gnina
+    # - diffdock
+  
+  # 受体PDB文件
+  receptor_pdb: "pdb_files_AKT1/4gv1.pdb"
+  
+  # 对接盒参数
+  box:
+    center_x: 10.0
+    center_y: 20.0
+    center_z: 30.0
+    size_x: 20.0
+    size_y: 20.0
+    size_z: 20.0
+
+# SA Score配置
+sa_score:
+  # SA Score阈值
+  threshold: 6.0
+  
+  # 是否排序
+  sort: true
+
+# 输出配置
+output:
+  # 结果目录
+  results_dir: "results"
+  
+  # 日志目录
+  logs_dir: "logs"
+  
+  # 是否保存中间结果
+  save_intermediate: true
+  
+  # 是否生成可视化报告
+  generate_plots: true
+
+# 并行处理
+parallel:
+  # 是否启用并行处理
+  enabled: false
+  
+  # 工作进程数
+  num_workers: 4

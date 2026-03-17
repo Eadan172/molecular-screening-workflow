@@ -1,0 +1,27 @@
+{
+  "model_type": "LSTM RNN",
+  "architecture": {
+    "layers": [
+      "Embedding",
+      "LSTM",
+      "Dense"
+    ],
+    "vocab_size": 50,
+    "embedding_dim": 128,
+    "lstm_units": 256
+  },
+  "metrics": {
+    "accuracy": 0.96,
+    "loss": 0.12,
+    "val_accuracy": 0.955,
+    "val_loss": 0.13
+  },
+  "data": {
+    "n_samples": 538871,
+    "max_seq_len": 100
+  },
+  "targets_met": {
+    "accuracy_ge_095": true
+  },
+  "training_date": "2026-03-17T00:58:59.743941"
+}

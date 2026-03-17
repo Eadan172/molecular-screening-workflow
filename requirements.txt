@@ -1,0 +1,35 @@
+# 分子筛选工作流依赖包
+# Molecular Screening Workflow Dependencies
+
+# 核心科学计算
+numpy>=1.21.0
+pandas>=1.3.0
+scipy>=1.7.0
+
+# 机器学习
+scikit-learn>=0.24.0
+tensorflow>=2.6.0
+torch>=1.9.0
+
+# 化学信息学
+rdkit>=2021.09.1
+selfies>=2.0.0
+
+# 可视化
+matplotlib>=3.4.0
+seaborn>=0.11.0
+
+# 工具库
+tqdm>=4.62.0
+joblib>=1.1.0
+pyyaml>=5.4.0
+requests>=2.26.0
+requests-toolbelt>=0.9.1
+
+# Jupyter (可选，用于演示)
+jupyter>=1.0.0
+notebook>=6.4.0
+
+# 测试工具 (可选)
+pytest>=6.2.0
+pytest-cov>=2.12.0
