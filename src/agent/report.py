@@ -5,6 +5,8 @@ from __future__ import annotations
 import csv
 from pathlib import Path
 
+from src.agent.jev import action_label, evidence_label, trend_label
+
 
 STATUS_LABEL = {
     "pass": "通过",
@@ -116,6 +118,7 @@ def render_report(context: dict) -> str:
     molecules = context["calc"]["molecules"]
     analysis = context["analysis"]
     research = context["research"]
+    jev = context.get("jev") or {}
     rule = context["rule_findings"]
     lines = [
         "# 分子设计运行报告",
@@ -225,6 +228,41 @@ def render_report(context: dict) -> str:
         lines.extend(["", "### 模型指出的原因", ""])
         lines.extend(f"- {item}" for item in extra_reasons)
 
+    lines.extend(["", "### Jev 决策门控", ""])
+    if jev.get("status") == "done":
+        answers = jev.get("answers") or {}
+        evidence = answers.get("evidence_gate") or {}
+        modality = answers.get("project_modality") or {}
+        action = answers.get("next_action") or {}
+        risk = answers.get("decision_risk") or {}
+        review = answers.get("needs_human_review") or {}
+        policy = jev.get("policy") or {}
+        lines.extend(
+            [
+                f"- 证据判断: {evidence_label(evidence.get('choice'))}"
+                f"（置信度 {_probability(evidence.get('confidence'))}）",
+                f"- 建议模态: {trend_label(modality.get('choice'))}"
+                f"（置信度 {_probability(modality.get('confidence'))}）",
+                f"- 模型下一步: {action_label(action.get('choice'))}"
+                f"（置信度 {_probability(action.get('confidence'))}）",
+                f"- 决策风险分数: {_fmt_optional(risk.get('score'))}",
+                f"- 需要人工复核概率: {_probability(review.get('noul'))}",
+                f"- 策略路由: `{policy.get('route') or '未返回'}`",
+                f"- 是否允许自动推进: {'是' if policy.get('allow_automatic_progress') else '否'}",
+            ]
+        )
+        for reason in policy.get("reasons") or []:
+            lines.append(f"  - {reason}")
+        lines.append(
+            "Jev 只用于语义证据和路线决策，不参与 SMILES、立体化学、理化性质或活性数值判定。"
+        )
+    elif jev.get("status") == "failed":
+        lines.append("Jev 调用失败，本次保守路由到人工复核。")
+        if jev.get("error"):
+            lines.append(f"- 原因: {jev['error']}")
+    else:
+        lines.append("未配置 `JEV_API_KEY`，跳过 Jev；确定性计算和报告不受影响。")
+
     lines.extend(["", "### 建议的下一步", ""])
     steps = list(rule["next_steps"])
     for item in _as_list(llm_findings.get("next_steps")):
@@ -319,6 +357,18 @@ def _fmt(value) -> str:
     if abs(number - round(number)) < 1e-8 and abs(number) >= 1:
         return str(int(round(number)))
     return f"{number:.2f}"
+
+
+def _fmt_optional(value) -> str:
+    if value is None or value == "":
+        return "未返回"
+    return _fmt(value)
+
+
+def _probability(value) -> str:
+    if value is None or value == "":
+        return "未返回"
+    return f"{float(value):.1%}"
 
 
 def _cell(value) -> str:

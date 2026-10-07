@@ -28,7 +28,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--calc-only",
         action="store_true",
-        help="即使填写了 LLM API Key，也只运行计算和规则报告",
+        help="即使填写了 LLM/Jev API Key，也只运行计算和规则报告",
     )
     parser.add_argument(
         "--output",
@@ -62,6 +62,10 @@ def main(argv: list[str] | None = None) -> int:
         print(f"已检测到 LLM API Key，将调用 {settings.model} 做分析、调研补充和数据解释。")
     else:
         print("未检测到 LLM API Key，直接运行计算，并用规则生成报告。")
+    if settings.jev_enabled:
+        print(f"已检测到 Jev API Key，将调用 {settings.jev_model} 做证据门控和下一步路由。")
+    else:
+        print("未检测到 Jev API Key，跳过 Jev 决策门控。")
 
     try:
         result = run_pipeline(

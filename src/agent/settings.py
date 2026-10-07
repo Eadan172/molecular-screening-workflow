@@ -9,6 +9,8 @@ from pathlib import Path
 
 DEFAULT_BASE_URL = "https://api.openai.com/v1"
 DEFAULT_MODEL = "gpt-4o-mini"
+DEFAULT_JEV_BASE_URL = "https://jev-ai.org/api/v1"
+DEFAULT_JEV_MODEL = "jev-1.13"
 
 _PLACEHOLDERS = {
     "",
@@ -33,6 +35,9 @@ class Settings:
     api_key: str = ""
     base_url: str = DEFAULT_BASE_URL
     model: str = DEFAULT_MODEL
+    jev_api_key: str = ""
+    jev_base_url: str = DEFAULT_JEV_BASE_URL
+    jev_model: str = DEFAULT_JEV_MODEL
     calc_only: bool = False
 
     @property
@@ -40,6 +45,17 @@ class Settings:
         if self.calc_only:
             return False
         key = (self.api_key or "").strip()
+        if key.lower() in _PLACEHOLDERS:
+            return False
+        if key.startswith("请填写"):
+            return False
+        return True
+
+    @property
+    def jev_enabled(self) -> bool:
+        if self.calc_only:
+            return False
+        key = (self.jev_api_key or "").strip()
         if key.lower() in _PLACEHOLDERS:
             return False
         if key.startswith("请填写"):
@@ -76,5 +92,8 @@ def load_settings(root: Path, calc_only: bool = False) -> Settings:
         api_key=pick("LLM_API_KEY"),
         base_url=pick("LLM_BASE_URL", DEFAULT_BASE_URL) or DEFAULT_BASE_URL,
         model=pick("LLM_MODEL", DEFAULT_MODEL) or DEFAULT_MODEL,
+        jev_api_key=pick("JEV_API_KEY"),
+        jev_base_url=pick("JEV_BASE_URL", DEFAULT_JEV_BASE_URL) or DEFAULT_JEV_BASE_URL,
+        jev_model=pick("JEV_MODEL", DEFAULT_JEV_MODEL) or DEFAULT_JEV_MODEL,
         calc_only=calc_only,
     )

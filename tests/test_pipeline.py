@@ -11,6 +11,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from src.agent.llm import LLMClient, chat_url, extract_json
+from src.agent.jev import JevClient, apply_policy, decision_url
 from src.agent.parser import attach_molecule_file, parse_request
 from src.agent.pipeline import run_pipeline
 from src.agent.research import lookup_target
@@ -94,7 +95,17 @@ class ParserTests(unittest.TestCase):
 
 class SettingsTests(unittest.TestCase):
     def setUp(self):
-        self.saved = {name: os.environ.get(name) for name in ("LLM_API_KEY", "LLM_BASE_URL", "LLM_MODEL")}
+        self.saved = {
+            name: os.environ.get(name)
+            for name in (
+                "LLM_API_KEY",
+                "LLM_BASE_URL",
+                "LLM_MODEL",
+                "JEV_API_KEY",
+                "JEV_BASE_URL",
+                "JEV_MODEL",
+            )
+        }
         for name in self.saved:
             os.environ.pop(name, None)
 
@@ -120,6 +131,18 @@ class SettingsTests(unittest.TestCase):
             self.assertFalse(load_settings(root, calc_only=True).llm_enabled)
             os.environ["LLM_API_KEY"] = "envkey"
             self.assertEqual(load_settings(root).api_key, "envkey")
+
+    def test_jev_settings_are_optional(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / ".env").write_text(
+                "JEV_API_KEY=sk-glm5-test\nJEV_MODEL=jev-1.13\n",
+                encoding="utf-8",
+            )
+            settings = load_settings(root)
+            self.assertTrue(settings.jev_enabled)
+            self.assertEqual(settings.jev_model, "jev-1.13")
+            self.assertFalse(load_settings(root, calc_only=True).jev_enabled)
 
 
 class ResearchTests(unittest.TestCase):
@@ -246,8 +269,87 @@ class LlmUnitTests(unittest.TestCase):
         self.assertNotIn("sk-SUPERKEY", json.dumps(captured["json"]))
 
 
+class JevUnitTests(unittest.TestCase):
+    def test_request_shape_and_policy(self):
+        self.assertEqual(
+            decision_url("https://jev-ai.org/api/v1/"),
+            "https://jev-ai.org/api/v1/systemone/",
+        )
+        captured = {}
+
+        def request(method, url, json=None, headers=None, timeout=None):
+            captured.update(
+                {"method": method, "url": url, "json": json, "headers": headers}
+            )
+
+            class Response:
+                status_code = 200
+                text = ""
+
+                def json(self):
+                    return {
+                        "id": "dec_test",
+                        "model": "jev-1.13",
+                        "model_version": "jev-1.13-test",
+                        "answers": {
+                            "evidence_gate": {
+                                "type": "choice",
+                                "choice": "sufficient",
+                                "confidence": 0.92,
+                                "probabilities": {"sufficient": 0.92},
+                            },
+                            "project_modality": {
+                                "type": "choice",
+                                "choice": "structure_based_3d",
+                                "confidence": 0.88,
+                                "probabilities": {"structure_based_3d": 0.88},
+                            },
+                            "next_action": {
+                                "type": "choice",
+                                "choice": "proceed",
+                                "confidence": 0.90,
+                                "probabilities": {"proceed": 0.90},
+                            },
+                            "decision_risk": {
+                                "type": "score",
+                                "score": 0.8,
+                                "confidence": 0.9,
+                                "probabilities": {"0": 0.8},
+                                "legend": {"0": "低"},
+                            },
+                            "needs_human_review": {"type": "noul", "noul": 0.2},
+                        },
+                        "usage": {"input_tokens": 100},
+                        "latency_ms": 250,
+                    }
+
+            return Response()
+
+        client = JevClient(
+            Settings(jev_api_key="sk-glm5-SECRET", jev_model="jev-1.13"),
+            http_request=request,
+        )
+        decision = client.decide({"target": "AKT1"})
+        self.assertEqual(decision["policy"]["route"], "proceed")
+        self.assertTrue(decision["policy"]["allow_automatic_progress"])
+        self.assertEqual(captured["headers"]["Authorization"], "Bearer sk-glm5-SECRET")
+        self.assertNotIn("sk-glm5-SECRET", json.dumps(captured["json"]))
+        self.assertEqual(len(captured["json"]["questions"]), 5)
+
+    def test_low_confidence_is_forced_to_human_review(self):
+        policy = apply_policy(
+            {
+                "evidence_gate": {"choice": "sufficient", "confidence": 0.7},
+                "next_action": {"choice": "proceed", "confidence": 0.9},
+                "needs_human_review": {"noul": 0.1},
+            }
+        )
+        self.assertEqual(policy["route"], "human_review")
+        self.assertFalse(policy["allow_automatic_progress"])
+
+
 class PipelineTests(unittest.TestCase):
-    def _run(self, text, settings, http_request=None, llm=None):
+    def _run(self, text, settings, http_request=None, llm=None, jev=None):
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
         folder = Path(tmp.name)
@@ -259,6 +361,7 @@ class PipelineTests(unittest.TestCase):
             output_root=folder / "out",
             project_root=folder,
             llm=llm,
+            jev=jev,
             http_get=_no_network,
             http_request=http_request,
             run_id="case",
@@ -300,6 +403,56 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(echo["status"], "done")
         self.assertIn("123", echo["stdout_tail"])
         self.assertEqual(missing["status"], "skipped")
+
+    def test_jev_decision_is_reported_without_leaking_key(self):
+        class FakeJev:
+            enabled = True
+
+            def decide(self, state):
+                self.state = state
+                return {
+                    "status": "done",
+                    "model": "jev-1.13",
+                    "answers": {
+                        "evidence_gate": {
+                            "type": "choice",
+                            "choice": "insufficient",
+                            "confidence": 0.91,
+                        },
+                        "project_modality": {
+                            "type": "choice",
+                            "choice": "structure_based_3d",
+                            "confidence": 0.86,
+                        },
+                        "next_action": {
+                            "type": "choice",
+                            "choice": "add_structure_affinity",
+                            "confidence": 0.88,
+                        },
+                        "decision_risk": {"type": "score", "score": 2.2},
+                        "needs_human_review": {"type": "noul", "noul": 0.42},
+                    },
+                    "policy": {
+                        "route": "add_structure_affinity",
+                        "allow_automatic_progress": False,
+                        "reasons": ["证据不足。"],
+                    },
+                }
+
+        fake = FakeJev()
+        result = self._run(
+            "[基本信息]\n靶点: AKT1\n[分子]\nCCO\n",
+            Settings(jev_api_key="sk-glm5-NOT-IN-REPORT"),
+            jev=fake,
+        )
+        report = Path(result["report"]).read_text(encoding="utf-8")
+        self.assertIn("Jev 决策门控", report)
+        self.assertIn("structure_based_3d", json.dumps(
+            json.loads(Path(result["run_dir"], "analysis.json").read_text(encoding="utf-8"))
+        ))
+        self.assertIn("add_structure_affinity", report)
+        self.assertNotIn("sk-glm5-NOT-IN-REPORT", _tree_text(Path(result["run_dir"])))
+        self.assertNotIn("molecules", fake.state)
 
     def test_api_result_merges_and_header_stays_out_of_report(self):
         secret = "SUPER_SECRET_TOKEN"
