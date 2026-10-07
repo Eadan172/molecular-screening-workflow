@@ -1,0 +1,49 @@
+# 分子设计需求
+# 用「键: 值」填写。以 # 开头的行是注释。
+# .env 里不填 LLM_API_KEY 时，程序跳过大模型，直接做解析、公开数据库检索和本地计算。
+
+[基本信息]
+靶点: AKT1
+种属: Homo sapiens
+适应症: 肿瘤
+目标: 寻找可口服的小分子抑制剂
+
+[理化性质]
+分子量: <= 500
+LogP: <= 5
+TPSA: <= 140
+氢键供体: <= 5
+氢键受体: <= 10
+可旋转键: <= 10
+QED: >= 0.3
+
+[活性与成药性]
+IC50: < 100 nM
+SA Score: <= 6
+hERG: 避免
+AMES: 阴性
+
+[分子]
+# 一行一个 SMILES。前两个是示例药物，最后一个是偏脂溶的长链，用来演示筛选。
+CC(=O)Oc1ccccc1C(=O)O
+CC(C)Cc1ccc(cc1)C(C)C(=O)O
+CCCCCCCCCCCCCCCCCCCCCCCC
+
+[计算软件]
+# 去掉行首 # 才会真正调用。路径不存在时记为跳过，不影响其他计算。
+# 可用占位符: {ligand} {smiles} {receptor} {output} {outdir}
+# name: vina
+# type: local
+# path: /usr/local/bin/vina
+# receptor: pdb_files_AKT1/4gv1.pdb
+# args: --receptor {receptor} --ligand {ligand} --out {output}
+# timeout: 300
+#
+# name: predict_api
+# type: api
+# url: http://127.0.0.1:8000/predict
+# method: POST
+# header: Authorization: Bearer YOUR_TOOL_TOKEN
+
+[备注]
+优先考虑已有晶体结构的结合口袋。种属以人源 AKT1 为准。
