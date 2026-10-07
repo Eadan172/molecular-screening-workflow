@@ -149,9 +149,24 @@ header: Authorization: Bearer YOUR_TOOL_TOKEN
 LLM_API_KEY=sk-你的密钥
 LLM_BASE_URL=https://api.deepseek.com/v1
 LLM_MODEL=deepseek-chat
+
+# 可选的 Jev 决策模型
+JEV_API_KEY=sk-glm5-你的密钥
+JEV_BASE_URL=https://jev-ai.org/api/v1
+JEV_MODEL=jev-1.13
 ```
 
 `LLM_BASE_URL` 需要包含 `/v1`。也支持 OpenAI、通义千问兼容模式和 Moonshot，具体地址写在 `.env.example`。
+
+`JEV_API_KEY` 也是可选的。填写后，流程在计算数据分析阶段调用 Jev：
+
+- `choice` 判断证据是充分、不足还是矛盾；
+- `choice` 在常规小分子、结构驱动 3D、共价/变构、靶向蛋白降解/分子胶、RNA 靶向之间给出优先评估方向；
+- `choice` 路由到继续、补结构/活性、补 ADMET/合成或人工复核；
+- `score` 评估决策风险；
+- `noul` 给出需要人工复核的概率。
+
+固定阈值会覆盖模型的乐观输出：证据置信度低于 0.85、下一步置信度低于 0.75、人工复核概率达到 0.70，或证据矛盾时，一律转人工复核。Jev 不参与 SMILES、立体化学、分子性质或活性数值判断，这些继续由 RDKit 和外部计算软件决定。生产和可重复评估建议固定 `jev-1.13`；`jev-latest` 会滚动更新。
 
 密钥放在 `.env`，这个文件不会被 Git 跟踪。不要把密钥写进 `input/request.txt`。工具自己的请求头可以写在计算软件段，它不会进入报告。
 
@@ -163,7 +178,7 @@ LLM_MODEL=deepseek-chat
 2. 任务拆解
 3. 调研
 4. 计算
-5. 计算数据分析
+5. 计算数据分析（含可选 Jev 决策门控）
 6. 报告整理
 
 同目录还有 `properties.csv`、`spec.json`、`research.json`、`calculations.json` 和 `run.log`。
