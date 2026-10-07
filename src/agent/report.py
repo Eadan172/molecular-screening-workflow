@@ -95,7 +95,9 @@ def rule_findings(spec, calc: dict, tools: list[dict]) -> dict:
         next_steps.append("如需自动判断 IC50 或结合能，在计算软件段写上本地程序或接口，并让结果里带 SMILES 列。")
     if summary.get("text_requirements"):
         next_steps.append("hERG、AMES 等文字要求需要预测接口或实验，不能用结构警示代替。")
-    if summary.get("n_failed") and not summary.get("n_passed"):
+    if summary.get("n_incomplete") and not summary.get("n_passed"):
+        next_steps.append("有分子已经满足目前算出来的数值条件，但还缺数据，因此没有标成通过。")
+    elif summary.get("n_failed") and not summary.get("n_passed"):
         next_steps.append("没有分子通过已算出的数值阈值。可以放宽最常失败的条件，或更换分子。")
     if not spec.smiles:
         next_steps.append("在 [分子] 段写入 SMILES，或用分子文件给出结构。")

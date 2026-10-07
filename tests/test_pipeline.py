@@ -160,6 +160,29 @@ class ResearchTests(unittest.TestCase):
         self.assertEqual(found["chosen"]["chembl_id"], "CHEMBL2")
         self.assertIn("一致", found["summary"])
 
+        def substrate_first(url, params, timeout):
+            if "activity" in url:
+                return {"activities": []}
+            return {
+                "targets": [
+                    {
+                        "target_chembl_id": "CHEMBL1255161",
+                        "pref_name": "Proline-rich AKT1 substrate 1",
+                        "organism": "Homo sapiens",
+                        "target_type": "SINGLE PROTEIN",
+                    },
+                    {
+                        "target_chembl_id": "CHEMBL4282",
+                        "pref_name": "RAC-alpha serine/threonine-protein kinase",
+                        "organism": "Homo sapiens",
+                        "target_type": "SINGLE PROTEIN",
+                    },
+                ]
+            }
+
+        kinase = lookup_target(spec, http_get=substrate_first)
+        self.assertEqual(kinase["chosen"]["chembl_id"], "CHEMBL4282")
+
         mouse = parse_request("[基本信息]\n靶点: AKT1\n种属: 小鼠\n")
 
         def only_human(url, params, timeout):

@@ -36,7 +36,7 @@ def lookup_target(spec: RequestSpec, http_get=None, timeout: int = 20) -> dict:
 
     getter = http_get or _default_get
     try:
-        payload = getter(CHEMBL_TARGET, {"q": spec.target, "limit": 8}, timeout)
+        payload = getter(CHEMBL_TARGET, {"q": spec.target, "limit": 20}, timeout)
         targets = [_target_fields(item) for item in _as_list(payload, "targets")]
         targets = [item for item in targets if item["chembl_id"] or item["pref_name"]]
         result["targets"] = targets
@@ -49,7 +49,7 @@ def lookup_target(spec: RequestSpec, http_get=None, timeout: int = 20) -> dict:
         result["summary"] = f"ChEMBL 没有返回与「{spec.target}」匹配的靶点。"
         return result
 
-    chosen = _choose_target(result["targets"], spec.species)
+    chosen = _choose_target(result["targets"], spec.species, spec.target)
     result["chosen"] = chosen
     if chosen.get("chembl_id"):
         try:
@@ -114,11 +114,34 @@ def _as_list(payload, key: str) -> list:
     return value if isinstance(value, list) else []
 
 
-def _choose_target(targets: list[dict], species: str) -> dict:
-    matched = [item for item in targets if species_matches(species, item.get("organism") or "")]
-    pool = matched or targets
-    singles = [item for item in pool if "SINGLE" in (item.get("target_type") or "").upper()]
-    return (singles or pool)[0]
+def _choose_target(targets: list[dict], species: str, query: str) -> dict:
+    ranked = sorted(
+        enumerate(targets),
+        key=lambda item: (-_target_score(item[1], species, query), item[0]),
+    )
+    return ranked[0][1]
+
+
+def _target_score(item: dict, species: str, query: str) -> int:
+    name = (item.get("pref_name") or "").lower()
+    query_text = (query or "").strip().lower()
+    organism = item.get("organism") or ""
+    target_type = (item.get("target_type") or "").upper()
+    score = 0
+    if species and organism:
+        score += 5 if species_matches(species, organism) else -3
+    if "SINGLE" in target_type:
+        score += 3
+    if "COMPLEX" in target_type or "PROTEIN-PROTEIN" in target_type:
+        score -= 2
+    tokens = set(name.replace("/", " ").replace("-", " ").split())
+    if query_text and query_text == name:
+        score += 8
+    elif query_text and query_text in tokens:
+        score += 4
+    if "substrate" in name and "substrate" not in query_text:
+        score -= 6
+    return score
 
 
 def species_matches(requested: str, organism: str) -> bool:

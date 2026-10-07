@@ -18,7 +18,7 @@ Windows：
 setup.bat
 ```
 
-脚本会在当前项目目录创建 `.venv`，安装 RDKit 和 requests，并在没有 `.env` 时从 `.env.example` 复制一份。终端里直接回车可以跳过密钥。
+脚本会在当前项目目录创建 `.venv`，安装 RDKit 和 requests，并在没有 `.env` 时从 `.env.example` 复制一份。终端里直接回车可以跳过密钥。Ubuntu 如果提示 `ensurepip` 不可用，先执行 `sudo apt install python3-venv`，再运行安装脚本。
 
 然后编辑两个文件：
 

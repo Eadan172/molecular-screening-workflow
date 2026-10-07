@@ -18,7 +18,10 @@ if sys.version_info < (3, 9):
     raise SystemExit("需要 Python 3.9 或更高版本，当前是 " + sys.version.split()[0])
 PY
 
-"$PY" -m venv .venv
+if ! "$PY" -m venv .venv; then
+  echo "创建 .venv 失败。Debian/Ubuntu 请先执行: sudo apt install python3-venv" >&2
+  exit 1
+fi
 .venv/bin/python -m pip install --upgrade pip
 .venv/bin/python -m pip install -r requirements.txt
 .venv/bin/python - <<'PY'
