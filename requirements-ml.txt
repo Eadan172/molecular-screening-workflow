@@ -1,0 +1,16 @@
+# 旧版 RNN / QSAR 训练的可选依赖。setup.sh 不会安装这些包。
+numpy>=1.23
+pandas>=2.0
+scipy>=1.10
+scikit-learn>=1.2
+tensorflow>=2.12
+torch>=2.0
+selfies>=2.1.0
+matplotlib>=3.7
+seaborn>=0.12
+tqdm>=4.65
+joblib>=1.2
+pyyaml>=6.0
+requests>=2.28
+requests-toolbelt>=1.0
+pytest>=7.0
