@@ -176,6 +176,43 @@ python -m unittest discover -s tests -v
 
 装好 `.venv` 后，用 `.venv/bin/python -m unittest discover -s tests -v` 可以同时跑 RDKit 计算断言。
 
+## 命中之后的结构检查（可选）
+
+筛选、对接和活性或 ADMET 预测结束之后，如果要查看命中结构、做局部替换，并确认改过的结构仍然是合法分子，可以用 [MoleCode](https://github.com/AtomFlow-AI/MoleCode)（MIT，`pip install molecode`）。它把 SMILES 写成带原子编号的 Mermaid 图，改完后再用 RDKit 转回分子。
+
+这一步只用于命中后的先导优化，不进入库枚举、QSAR、ADMET 或对接，也不改变这些阶段的吞吐。`setup.sh` / `setup.bat` 不会安装它，`requirements.txt` 里的版本约束保持不变。
+
+在已经准备好的 `.venv` 里安装：
+
+```bash
+.venv/bin/python -m pip install -r requirements-leadopt.txt
+```
+
+Windows 使用 `.venv\Scripts\python.exe -m pip install -r requirements-leadopt.txt`。
+
+单个命中先变成图。可以改 `.mmd` 里的原子或键，再校验回标准 SMILES。`--require-smarts` 可选，用来要求先导骨架还在：
+
+```bash
+.venv/bin/python leadopt.py smiles-to-mermaid "CCO" --name Ethanol --output ethanol.mmd
+.venv/bin/python leadopt.py mermaid-to-smiles --input ethanol.mmd --require-smarts "[OX2H]"
+```
+
+Windows 把 `.venv/bin/python` 换成 `.venv\Scripts\python.exe`。
+
+整份命中表需要有 `SMILES` 或 `标准SMILES` 列，例如 `results/SA/sa_filtered.csv`，或某次运行写在 `results/runs/<时间戳>/properties.csv` 里的表：
+
+```bash
+.venv/bin/python leadopt.py export-hits results/SA/sa_filtered.csv --out results/leadopt
+```
+
+每个合法结构写成 `hit_0001.mmd`，对照关系在同目录的 `index.csv`。非法 SMILES 和校验失败的图会被拒绝，原来的命中表不会被改写。再导出到同一目录时，会更新其中的 `hit_*.mmd` 和 `index.csv`。编辑某个 `.mmd` 后，用上面的 `mermaid-to-smiles` 取回 SMILES。
+
+只跑这一部分的测试：
+
+```bash
+.venv/bin/python -m unittest tests.test_leadopt_molecode -v
+```
+
 ## 旧的固定筛选脚本
 
 `run_workflow.py` 和 `src/` 里的 RNN、QSAR、ADMET 脚本是原先的固定流程。当前默认入口是 `run.py`。旧脚本中还有未处理的合并冲突，不作为现在的使用方式。若要训练那些模型，另装 `requirements-ml.txt`；其中的 TensorFlow 和 PyTorch 不在一键安装里。
