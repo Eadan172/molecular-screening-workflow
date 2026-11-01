@@ -50,6 +50,7 @@ results/**/*.png
 results/**/*.pdf
 results/**/*.txt
 results/runs/**
+results/leadopt/
 !results/runs/.gitkeep
 !results/.gitkeep
 

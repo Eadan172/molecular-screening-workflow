@@ -1,4 +1,5 @@
 # 一键安装的运行依赖。旧版 RNN/QSAR 训练依赖见 requirements-ml.txt。
+# 命中后的 MoleCode 结构编辑不在这里，见 requirements-leadopt.txt。
 rdkit>=2023.3.1
 requests>=2.28.0
 pandas>=2.0.0

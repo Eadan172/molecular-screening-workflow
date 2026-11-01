@@ -1,0 +1,5 @@
+# 可选。库枚举、QSAR、ADMET、对接和一键安装都不读取这个文件。
+# 在已经装好 requirements.txt 的环境里执行:
+#   python -m pip install -r requirements-leadopt.txt
+# molecode 自带 rdkit>=2022.9 与 networkx。本文件不改写 requirements.txt 里的版本约束。
+molecode>=0.1.0
